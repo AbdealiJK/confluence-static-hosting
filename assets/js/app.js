@@ -147,6 +147,28 @@ function getPage(pageId) {
     }
 }
 
-function createPageHierarchy(pages) {
-    parents = [...new Set(Object.values(pages).map(el => el.parentId))]
+function createPageHeirarchy(pages) {
+    var pages = JSON.parse(JSON.stringify(pages))  // deep clone
+    var rootPages = pages.filter(page => !page.parentId)
+
+    while (pages.filter(page => page.children === undefined).length > 0) {
+        pages.forEach(page => {
+            if (!page.parentId) {
+                // rootPages.push(page)
+                page.children = []
+            } else {
+                parentPages = pages.filter(parentPage => parentPage.id == page.parentId)
+                if (parentPages.length !== 1) {
+                    console.log(`Found ${parentPages.length} parentPages for page `, page)
+                }
+                if (parentPages.length > 0) {
+                    parentPages.filter(page => page.children !== undefined).forEach(parentPage => {
+                        parentPage.children.push(page)
+                    })
+                    page.children = []
+                }
+            }
+        })
+    }
+    return rootPages
 }
