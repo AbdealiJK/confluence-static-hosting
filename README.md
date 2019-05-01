@@ -20,6 +20,8 @@ Similar Alternatives:
   - `assets/export/entities.xml`
   - `assets/export/exportDescriptor.properties`
   - `assets/export/attachments` (if any)
-3. Run a simple http server form the repo root
+3. Run `python trim_export.py assets/export` to trim the exported bundle to remove information not useful
+   for static hosting.
+4. Run a simple http server form the repo root
   - If you have python, this can be done with: `python -m http.server 9000`
-4. Browse to `localhost:9000` in your browser
+5. Browse to `localhost:9000` in your browser
