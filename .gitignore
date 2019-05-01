@@ -1,0 +1,45 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+dist/
+tmp
+out-tsc
+bin/
+*.pyc
+
+# Python - Distribution / packaging
+eggs/
+.eggs/
+lib/
+lib64/
+wheels/
+*.egg-info/
+*.egg
+MANIFEST
+
+# IDEs and editors
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.ipr
+*.iws
+.idea
+*.iml
+
+# IDE - VSCode
+.vscode
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Application specific
+instance/
+export/
