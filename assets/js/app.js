@@ -22,7 +22,7 @@ function _getAllPages() {
     return $allPages.filter((iel, el) => {
         return $(el).children('property[name="contentStatus"]').text().trim().toLowerCase() === 'current'
     })
-    }
+}
 
 function _getNodeId(node) {
     return $(node).children('id').text().trim()
@@ -60,7 +60,7 @@ function _getGroupedPageVersions(pages) {
         originalVersionId = _getNodeOriginalVersionId($el)
         if (! pageVersions.hasOwnProperty(originalVersionId)) {
             pageVersions[originalVersionId] = []
-            }
+        }
         pageVersions[originalVersionId].push($el[0])
     })
     // Sort all the provided pages by version
@@ -68,7 +68,7 @@ function _getGroupedPageVersions(pages) {
         pageVersions[key].sort(_getNodeVersion)
     })
     return pageVersions
-        }
+}
 
 function getPagesList() {
     var $allPages = _getAllPages()
@@ -79,7 +79,7 @@ function getPagesList() {
         var pageVersions = allPageVersions[_getNodeOriginalVersionId($page)]
         var parentVersionId = _getInfoRecursively(pageVersions, (pageVersion) => {
             return $(pageVersion).children('property[name="parent"]').children('id').text().trim()
-    })
+        })
         if (parentVersionId) {
             var foundParentPages = $allPages.filter((iel, el) => _getNodeId(el) === parentVersionId)
             if (foundParentPages.length === 1) {
@@ -123,9 +123,30 @@ function getPage(pageId) {
         var $bodyContent = $(bodyContentObjs[0])
         var body = $bodyContent.children('property[name="body"]').text()
     }
+
+    // Get attachments from page information
+    var pageAttachments = $page.find('collection[name="attachments"] element.Attachment id')
+    var attachmentIds = pageAttachments.map((iel, el) => $(el).text()).toArray()
+    var attachments = $docData.children('object[class="Attachment"]').filter((iel, el) => {
+        return attachmentIds.indexOf(_getNodeId(el)) !== -1
+    }).toArray();
+    
     return {
         id: _getNodeId($page),
         title: $page.children('property[name="title"]').text().trim(),
-        body: body
+        body: body,
+        attachments: attachments.map(el => {
+            $el = $(el)
+            return {
+                id: _getNodeId($el),
+                title: _getNodeTitle($el),
+                version: _getNodeVersion($el),
+                url: `/${_getNodeId($page)}/${_getNodeId($el)}/${_getNodeVersion($el)}`
+            }
+        })
     }
+}
+
+function createPageHierarchy(pages) {
+    parents = [...new Set(Object.values(pages).map(el => el.parentId))]
 }
