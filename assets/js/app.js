@@ -17,85 +17,114 @@ $(function() {
     });
 });
 
-function _getPageOriginalVersionId(page) {
-    $page = $(page)
-    originalVersionId = $page.children('property[name="originalVersionId"]').text().trim()
-    if (! originalVersionId) {
-        originalVersionId = $page.children('id').text().trim()
+function _getAllPages() {
+    var $allPages = $docData.children('object[class="Page"]')
+    return $allPages.filter((iel, el) => {
+        return $(el).children('property[name="contentStatus"]').text().trim().toLowerCase() === 'current'
+    })
     }
-    return originalVersionId
+
+function _getNodeId(node) {
+    return $(node).children('id').text().trim()
 }
 
-function _getPageId(page) {
-    return $(page).children('id').text().trim()
+function _getNodeTitle(node) {
+    return $(node).children('property[name="title"]').text().trim()
 }
 
-function _getPageVersion(page) {
-    return parseInt($(page).children('property[name="version"]').text().trim())
+function _getNodeVersion(node) {
+    return parseInt($(node).children('property[name="version"]').text().trim())
 }
+
+function _getNodeOriginalVersionId(node) {
+    $node = $(node)
+    originalVersionId = $node.children('property[name="originalVersionId"]').text().trim()
+    return originalVersionId ? originalVersionId : _getNodeId($node)
+}
+
+function _getInfoRecursively(nodes, fn) {
+    // Recurse on the `nodes` left to right and get the value where the `fn` returns a valid value
+    for (var i = 0; i < nodes.length; i++) {
+        var ret = fn(nodes[i])
+        if (ret) {
+            return ret
+        }
+    }
+}
+
+function _getGroupedPageVersions(pages) {
+    // Get the latest page versions by mapping it to the originalVersionId.
+    pageVersions = {} // {originalVersionId: [pageVersions ...]}
+    pages.each((iel, el) => {
+        $el = $(el)
+        originalVersionId = _getNodeOriginalVersionId($el)
+        if (! pageVersions.hasOwnProperty(originalVersionId)) {
+            pageVersions[originalVersionId] = []
+            }
+        pageVersions[originalVersionId].push($el[0])
+    })
+    // Sort all the provided pages by version
+    Object.keys(pageVersions).forEach(key => {
+        pageVersions[key].sort(_getNodeVersion)
+    })
+    return pageVersions
+        }
 
 function getPagesList() {
-    var $allPages = $docData.children('object[class="Page"]');
+    var $allPages = _getAllPages()
+    allPageVersions = _getGroupedPageVersions($allPages)
 
-    // Get the latest page versions by mapping it to the originalVersionId.
-    latestPageVersions = {} // {originalVersionId: latestPageVersion}
-    $allPages.each((iel, el) => {
-        $el = $(el)
-        originalVersionId = _getPageOriginalVersionId($el)
-        if (! latestPageVersions.hasOwnProperty(originalVersionId)) {
-            latestPageVersions[originalVersionId] = $el;
-        } else {
-            if (_getPageVersion($el) > _getPageVersion(latestPageVersions[originalVersionId])) {
-                latestPageVersions[originalVersionId] = $el;
-            }
-        }
+    return Object.keys(allPageVersions).map(key => {
+        $page = $(allPageVersions[key][allPageVersions[key].length - 1])
+        var pageVersions = allPageVersions[_getNodeOriginalVersionId($page)]
+        var parentVersionId = _getInfoRecursively(pageVersions, (pageVersion) => {
+            return $(pageVersion).children('property[name="parent"]').children('id').text().trim()
     })
-    console.log(latestPageVersions)
-
-    return Object.values(latestPageVersions).map(el => {
-        $el = $(el)
-        // debugger;
-        parentOriginalVersionId = $el.children('property[name="parent"]').children('id').text().trim()
-        if (! parentOriginalVersionId) {
-            var initialElId = $el.children('property[name="originalVersionId"]').text().trim()
-            $initialPage = $allPages.filter((ix, x) => $(x).children('id').text().trim() == initialElId)
-            if ($initialPage.length === 0) {
-                parentOriginalVersionId = '';
+        if (parentVersionId) {
+            var foundParentPages = $allPages.filter((iel, el) => _getNodeId(el) === parentVersionId)
+            if (foundParentPages.length === 1) {
+                parentVersions = allPageVersions[_getNodeOriginalVersionId(foundParentPages[0])];
+                parentId = _getNodeId(parentVersions[parentVersions.length - 1])
             } else {
-                parentOriginalVersionId = $initialPage.children('property[name="parent"]').children('id').text().trim()
+                console.log(`Found ${parentVersions.length} parentVersions for page ${$page}`)
+                parentId = null;
             }
+        } else {
+            parentId = null;
         }
         return {
-            id: $el.children('id').text().trim(),
-            title: $el.children('property[name="title"]').text().trim(),
-            originalVersionId: originalVersionId,
-            parentOriginalVersionId: parentOriginalVersionId
+            id: _getNodeId($page),
+            title: _getNodeTitle($page),
+            parentId: parentId
         };
     });
 }
 
 function getPage(pageId) {
-    var $allPages = $docData.children('object[class="Page"]');
-    var pages = $allPages.filter((ix, x) => $(x).children('id').text().trim() == pageId)
+    pageId = pageId.toString()
+    var $allPages = _getAllPages()
+    var pages = $allPages.filter((ix, x) => $(x).children('id').text().trim() === pageId)
     if (pages.length === 0) {
         return;
     }
     var $page = $(pages[0])
+
+    // Get body from page information
     var bodyContentIds = $page.children('collection[name="bodyContents"]').map((iel, el) => {
         return $(el).find('element.BodyContent id').text().trim()
     }).toArray()
-    debugger;
-    var bodyContents = $docData.children('object[class="BodyContent"]').filter((iel, el) => {
+    var bodyContentObjs = $docData.children('object[class="BodyContent"]').filter((iel, el) => {
         return bodyContentIds.indexOf($(el).children('id').text().trim()) !== -1
     });
-    if (bodyContents.length !== 1) {
-        console.log(`Found ${bodyContents.length} bodyContents for page ${$page}`)
+    if (bodyContentObjs.length !== 1) {
+        console.log(`Found ${bodyContentObjs.length} bodyContents for page ${$page}`)
     }
-    if (bodyContents.length === 1) {
-        var $bodyContent = $(bodyContents[0])
+    if (bodyContentObjs.length === 1) {
+        var $bodyContent = $(bodyContentObjs[0])
         var body = $bodyContent.children('property[name="body"]').text()
     }
     return {
+        id: _getNodeId($page),
         title: $page.children('property[name="title"]').text().trim(),
         body: body
     }
