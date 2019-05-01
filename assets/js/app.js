@@ -86,7 +86,7 @@ function getPagesList() {
                 parentVersions = allPageVersions[_getNodeOriginalVersionId(foundParentPages[0])];
                 parentId = _getNodeId(parentVersions[parentVersions.length - 1])
             } else {
-                console.log(`Found ${parentVersions.length} parentVersions for page ${$page}`)
+                console.log(`Found ${parentVersions.length} parentVersions for page `, $page)
                 parentId = null;
             }
         } else {
@@ -117,7 +117,7 @@ function getPage(pageId) {
         return bodyContentIds.indexOf($(el).children('id').text().trim()) !== -1
     });
     if (bodyContentObjs.length !== 1) {
-        console.log(`Found ${bodyContentObjs.length} bodyContents for page ${$page}`)
+        console.log(`Found ${bodyContentObjs.length} bodyContents for page `, $page)
     }
     if (bodyContentObjs.length === 1) {
         var $bodyContent = $(bodyContentObjs[0])
