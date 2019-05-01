@@ -12,3 +12,14 @@ Similar Alternatives:
    public. [marketplace](https://marketplace.atlassian.com/apps/1214121/instant-websites-for-confluence)
  - `Native Confluence Support` - This is under discussion in the JIRA ticket
    [CONFSERVER-18265](https://jira.atlassian.com/browse/CONFSERVER-18265)
+
+
+# Usage
+1. Take a XML dump from confluence
+2. Put the folder into `assets/export` so that the following paths exist:
+  - `assets/export/entities.xml`
+  - `assets/export/exportDescriptor.properties`
+  - `assets/export/attachments` (if any)
+3. Run a simple http server form the repo root
+  - If you have python, this can be done with: `python -m http.server 9000`
+4. Browse to `localhost:9000` in your browser
